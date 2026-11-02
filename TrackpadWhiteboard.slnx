@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TrackpadWhiteboard.App/TrackpadWhiteboard.App.csproj" />
+  </Folder>
+</Solution>
