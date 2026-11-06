@@ -81,7 +81,7 @@ The owner tested the spike on their own laptop on 2 November 2026, and wrote ful
 
 ### Non-goals
 
-Later phases:
+Later phases. Each phase is small enough to finish and use:
 
 * **Phase 2, more layouts:** portrait boards, and layouts with halves, thirds, quarters and sixths.
 * **Phase 3, shapes and diagrams:** triangles and other shapes, for example for a Pythagoras problem.
@@ -146,6 +146,12 @@ Board:
     `MainWindow.xaml.cs:98-127` — letter and punctuation keys change settings with no warning.
 12. **One colour only.**
     `MainWindow.xaml.cs:294` — the pen is always black.
+
+Not investigated:
+
+13. **Capital "T".** In some screenshots, a capital "T" looked like a "1". This may be the owner's handwriting.
+
+`TouchpadReader.cs`, `TouchpadDevice.cs` and `LineWriter.cs` are the parts of the spike most worth keeping. Whether the app grows from the spike or starts clean and reuses them is a design decision.
 
 ---
 
