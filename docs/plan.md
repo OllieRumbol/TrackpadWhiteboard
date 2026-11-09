@@ -1,0 +1,326 @@
+# Trackpad Whiteboard, phase 1 — Plan
+
+> **What this document is for:** It answers *how will we build it?* It turns the approved requirements in spec.md into a design, and it is agreed before any code is written.
+
+Status: Approved
+Last updated: 2026-11-09
+
+---
+
+## 1. Approach
+
+Grow the spike into the real app, in the same .NET 10 WPF project. First make the writing testable and improve it until it passes the writing test (spec section 6.2.1), as the build order in spec section 3 requires. Then add the board, saving and the home screen around it. Placement logic stays pure, with no WPF controls, so that automated tests and recorded handwriting can prove it.
+
+### 1.1 Options considered
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Grow from the spike | The input code already works on the owner's touchpad, with strict build settings. The code is small. The owner can test the writing from the first day. | `MainWindow.xaml.cs` holds too much and must be split. |
+| Start clean and copy parts | A tidy start. | The copied parts are the same files. The owner has nothing to test until the new shell works. |
+| Another UI framework, such as WinUI | Newer ink controls. | Rewrites working code, and solves no problem in the spec. The probe in section 9 shows that WPF ink is fast enough. |
+
+Chosen: grow from the spike. It keeps what the owner already tested, and it does not delay the writing work.
+
+---
+
+## 2. Configuration
+
+The app has no secrets and no `appsettings.json`.
+
+| Setting | Stored in | Default | Notes |
+| --- | --- | --- | --- |
+| Line height on the screen | `settings.json` | 90 | Value from the spike. Spec section 6.1.8 |
+| Pen thickness on the screen | `settings.json` | 6 | Value from the spike. Spec section 2.4 |
+| Letter gap, word gap, smoothing, pause and jump values | Constants in code | Spike values | Tuned with the tuning keys, then fixed (spec section 6.1.8) |
+| Data folder | Constant in code | `%LOCALAPPDATA%\TrackpadWhiteboard` | Local only (spec section 6.1.7) |
+
+---
+
+## 3. Architecture
+
+### 3.1 Components
+
+One app project and one test project. A separate logic project gives no benefit yet, because `LineWriter` uses WPF geometry types, so the tests need the Windows target in any case.
+
+```text
+src/TrackpadWhiteboard.App/
+  App.xaml(.cs)        Start-up, one running copy, global error handling
+  MainWindow           Holds the current screen and the window message hook
+  Input/               TouchpadReader, TouchpadDevice, TouchpadRecorder
+  Interop/             Windows API declarations (no change)
+  Writing/             LineWriter, PointSmoother, word boundary methods
+  Boards/              Board, BoardStore, BoardLayout, UndoHistory, BoardSaver
+  Screens/             HomeScreen, BoardScreen, SettingsView
+  Settings/            AppSettings and its store
+tests/TrackpadWhiteboard.App.Tests/
+  Writing/, Boards/, Input/    MSTest tests
+  TestData/Recordings/         Recordings of the test lines only (section 6)
+```
+
+### 3.2 Existing code to follow or reuse
+
+* `TouchpadReader.cs` and `TouchpadDevice.cs` — keep. Add the lost finger-up fix in section 4.
+* `LineWriter.cs` — keep as the base for placement. It already takes the time as an argument and has no WPF controls, so it is easy to test.
+* `PointSmoother.cs` — keep.
+* `MainWindow.xaml.cs:81-135` — move the tuning keys out, then remove them as spec section 6.1.8 requires.
+* `MainWindow.xaml.cs:150-200` — keep the Caps Lock and cursor lock flow, and move it into `BoardScreen`.
+
+### 3.3 Interfaces and contracts
+
+`LineWriter` decides the gap, and it returns moves for the screen to apply. It does not touch WPF strokes.
+
+```csharp
+internal enum WordBoundaryMethod { AppWorksItOut, RowRule, LongerPause, TouchpadSignal }
+
+internal enum GapKind { None, Letter, Word }
+
+// What the screen must do when the finger lifts.
+internal sealed record StrokePlacement(double ShiftX, WordMove? MoveToNewLine);
+
+internal sealed record WordMove(IReadOnlyList<int> StrokeIds, double OffsetX, double OffsetY);
+
+internal sealed class LineWriter
+{
+    public Point BeginStroke(TouchpadPoint finger, TimeSpan now);
+    public Point ContinueStroke(TouchpadPoint finger);
+    public StrokePlacement EndStroke(int strokeId, double strokeLeft, double strokeRight, TimeSpan now);
+    public void StartLine(Point start, Rect section, double lineHeight);
+    public void NewLine();
+    public void AddWordGap();
+    public void RemoveStroke(int strokeId);
+}
+
+internal sealed class BoardStore
+{
+    public IReadOnlyList<BoardSummary> ListBoards();
+    public Board Open(Guid id);
+    public Board Create(BoardLayoutKind layout, Size screen);
+    public void Rename(Guid id, string name);
+    public void Delete(Guid id);
+    public void Save(Board board, Stream strokes);
+}
+```
+
+Keys:
+
+| Key | Mode | Action | Spec |
+| --- | --- | --- | --- |
+| Enter, Space | Writing | New line, word gap | 6.1.2 |
+| Backspace | Both | Undo | 6.1.6 |
+| `Y` | Both | Redo | 6.1.6 |
+| `1` to `4` | Both | Black, blue, red, green | 6.1.6 |
+| `E` | Mouse | Eraser on or off | 6.1.6 |
+| Delete | Mouse | Clear the board | 6.1.6 |
+| `+`, `-`, arrow keys | Mouse | Zoom, move the view | 6.1.3 |
+| `0` | Mouse | See the whole board | 6.1.3 |
+| Esc | Mouse | Go back to the home screen | 6.4.2 |
+
+### 3.4 Data model
+
+Each board has its own folder:
+
+```text
+%LOCALAPPDATA%\TrackpadWhiteboard\
+  settings.json
+  Boards\<board id>\board.json     Details of the board
+  Boards\<board id>\strokes.isf    The ink
+  Boards\<board id>\preview.png    The picture for the home screen
+  Recordings\                      Raw touchpad recordings
+  Logs\app.log
+```
+
+`board.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "6f1c2d3e-0000-4000-8000-000000000000",
+  "name": "2026-11-06 21:04",
+  "layout": "ThreeColumns",
+  "width": 7680,
+  "height": 4320,
+  "titleBoxHeight": 351,
+  "lastChangedUtc": "2026-11-06T21:04:00Z",
+  "view": { "zoom": 1.0, "offsetX": 0, "offsetY": 0 },
+  "penColour": "Black"
+}
+```
+
+* All sizes are WPF device-independent units on the board.
+* `width` and `height` are 4 times the primary screen size when the board is created (spec section 6.1.3).
+* `titleBoxHeight` is 3 lines at the line height and line spacing in use when the board is created (spec section 6.1.5).
+* Line details are kept in memory only. After a board opens, writing starts on a new line (spec section 6.1.1), so saved boards do not need them.
+* The undo history is kept in memory only, for the time a board is open.
+
+A recording is one JSON object per line, with the raw values:
+
+```json
+{"t":1234.5,"e":"down","x":0.12,"y":0.51,"id":3,"fingers":1}
+```
+
+### 3.5 Key decisions
+
+| Decision | Choice | Why | Alternatives rejected |
+| --- | --- | --- | --- |
+| Word boundary methods | One `WordBoundaryMethod` setting while testing. Only the winner stays. | Spec section 6.1.2.1 needs the methods compared on the same recordings. The spike's `AdvanceMode` already works this way. | An interface with one class per method: too much for code that is removed later. |
+| Finding the word boundary method | Record first, then replay the recordings through `LineWriter` in tests. | Same input for every method, and no need for the owner to rewrite lines for each change. | Only live testing: slow and hard to compare. |
+| Labelling recordings | After recording, from a picture of numbered strokes. | Pressing a key while writing would change the timing that the app must read. | A label key while writing. |
+| Row rule mapping | The row is set at finger down. Y maps from that row to the line height, and X maps across a window 3 times as wide. A stroke that leaves its row keeps its row's mapping. | It matches spec section 6.1.2.1, and letters are not cut off. | Changing the row during a stroke: a letter would jump. |
+| Touchpad signal | If it is needed, a tap with a second finger. | A one-finger tap looks the same as an "i" dot. | A one-finger tap. |
+| Dots and crossbars | First test: a small stroke that starts inside the current word's ink stays on its letter. Prove or replace this with recordings. | Defect 2 in spec section 4.1. The size is known only when the finger lifts. | Treat every pause as moving along: this is the defect. |
+| Ink store | Ink Serialized Format through `StrokeCollection.Save`. | Built in. The probe confirms that colour, thickness and custom data survive. | Own JSON format: more code, and larger files. |
+| Details store | `System.Text.Json` | The standard for .NET projects under the owner's rules. | A database: not needed for one user and one folder per board. |
+| Zoom and view | A `MatrixTransform` on the board's layer. | Ink stays vector, so it stays sharp (spec section 6.1.3). The probe shows it is smooth. | A control that handles zoom for us: nothing needs it. |
+| Same size on the screen | New strokes get thickness and line height divided by the zoom. | Spec section 6.1.3 item 7. | Scaling the strokes later: changes saved ink. |
+| Pinch and scroll | Read `WM_MOUSEWHEEL` and `WM_MOUSEHWHEEL` in the existing window hook, in mouse mode only, and use the size of each delta. | Microsoft documents that default touchpad handling typically generates mouse wheel messages, and that touchpads send very small deltas. The hook already exists and gives the raw values. | Registering as a touchpad-capable window: more code, with no benefit yet. |
+| Saving | Save from a background thread, from a snapshot, at most every 3 seconds, after a stroke ends. | Spec section 6.5 items 3 and 4. The probe shows 404 ms on the UI thread for 20,000 strokes, which would delay writing. | Saving on the UI thread. |
+| Moves during saving | A move replaces a stroke with a moved copy. It does not change a stroke that a snapshot can hold. | The background save reads strokes with no lock. | Locks on the UI thread: they could delay writing. |
+| Clear the board | Delete clears at once, and one undo brings it back. | Spec section 6.1.6 item 7 allows this. It needs fewer key presses (spec section 6.5 item 7). | Asking first. |
+| Screens | One window, with `HomeScreen` and `BoardScreen` as user controls, and code-behind. | It matches the spike. The logic is in plain classes, so a view model pattern adds no value. | An MVVM framework. |
+| Start-up and services | No Generic Host and no dependency injection container. | The rules ask for the Host for long-running apps such as workers and services. This is a small desktop app. | The Generic Host. |
+| One running copy | A named `Mutex`, and the first copy comes to the front. | Spec section 6.6. | Allowing several copies: they could overwrite a board. |
+| Grown board | `height` grows by one screen when a new line is below the bottom. | Spec section 6.1.4 item 4. | Growing by one line: too many layout changes. |
+
+### 3.6 Design direction
+
+The owner chose the character, the reference and the signature. The other items are proposals. The owner judges them on the real screens and signs off the look.
+
+| Item | Proposal |
+| --- | --- |
+| References | Chosen by the owner: Microsoft Whiteboard. Take its ideas, not its look: a light board with a lot of space, one small floating pen tray, and slim controls at the edges. The owner wants the app to feel unique and fresh. |
+| Tools | Proposal: one small floating tray in mouse mode, with the pens, eraser, undo, redo, zoom and home. Each button shows its key, so the tray also teaches the keys. In writing mode the tray hides, so the board gets all the space. |
+| Character | Chosen by the owner: quiet and plain, like a clean whiteboard in a room. The ink is the main thing on the screen. |
+| Signature | Chosen by the owner: the touchpad outline. In writing mode, a faint rounded frame on the board shows the writing window, so the owner sees where the next stroke lands (spec section 6.1.1 item 6). It moves with the writing window, and it is drawn on a layer above the ink that is not saved. |
+| Type | Segoe UI, because it is already on Windows. Sizes 14, 18 and 28. |
+| Colour | White and light grey for the app. Marker black, blue, red and green for ink only. |
+| Motion | None while writing. A short zoom to a board when it opens, if it causes no delay. |
+| Avoid | Full-width toolbars, dialogs, dark or decorated backgrounds, and copying Microsoft Whiteboard's look. |
+| Content | The owner's own boards. |
+
+---
+
+## 4. Error handling
+
+| Situation | Behaviour |
+| --- | --- |
+| No precision touchpad | Show the message that spec section 6.6 requires. `TouchpadReader.HasSeenTouchpad` stays false. |
+| A finger-up report is lost | When a complete frame does not hold the tracked contact, end the stroke. The next touch starts a new stroke (spec section 6.6). |
+| Writing a save fails | Keep the board in memory, show a message, try again at the next save, and log it. The old files stay in place. |
+| The app stops during a save | Files are written to a `.tmp` name and replace the old file only after they are complete. So the last complete save stays usable. |
+| `board.json` or `strokes.isf` cannot be read | The home screen shows the board as damaged (spec section 6.4.1). The other boards work. |
+| `preview.png` is missing or damaged | Show a blank preview. The board still opens. |
+| `settings.json` cannot be read | Use the defaults and log it. |
+| Unexpected exception | One handler in `App.xaml.cs` logs it, releases the cursor lock, tries a last save and shows a message. |
+| Window stops being active | The existing `Deactivated` flow ends the stroke and frees the cursor (spec section 6.1.1). |
+| The laptop sleeps or locks | The same flow must run (spec section 6.6). Not yet tested: check on the laptop, and also handle the Windows session events if the flow does not run. |
+| App closes in writing mode | Release the cursor lock and save first. |
+
+---
+
+## 5. Observability
+
+* `Logs\app.log` holds errors and warnings, through `ILogger<T>` with a small file logger. It never holds ink or board names.
+* While the tuning keys exist, the status bar shows the time from the touchpad report to the next rendered frame, plus the move-along decision and its reason. This gives the numbers for spec section 6.5 item 1.
+* After that, the app logs the slowest writing response in each session, and each save that takes longer than 1 second.
+
+---
+
+## 6. Security
+
+| Item | Decision |
+| --- | --- |
+| Network | None. The app has no network code (spec section 6.5 item 8). |
+| Secrets | None. |
+| Data | Boards, settings and recordings stay in the current user's local app data folder. |
+| Files read | Only from the app's own folder. A damaged file is handled as section 4 says. |
+| Recordings | They hold the owner's handwriting, and the repository is public. The owner approved recordings of the test lines in spec section 6.2.1 in `tests/TrackpadWhiteboard.App.Tests/TestData/Recordings/`. Recordings of real notes stay in the local `Recordings\` folder and never go in the repository. |
+| Logs | No ink, names or personal data. |
+
+---
+
+## 7. Testing
+
+### 7.1 Principles
+
+* MSTest, in `tests/TrackpadWhiteboard.App.Tests`, with internals visible to the test project. The project uses the Windows target, because the app uses WPF types.
+* Test placement through `LineWriter`'s public methods, with data-driven tests for the worked examples in spec section 6.2.
+* Replay recorded handwriting through `LineWriter`, and check the result against labels. This compares the methods in spec section 6.1.2.1.
+* Store tests use a new temporary folder for each test.
+* The feel of writing, pinch gestures and the writing test need the owner on the real touchpad. Automated tests do not replace these.
+
+### 7.2 Tests
+
+| # | Test | Spec | Defect it catches |
+| --- | --- | --- | --- |
+| 1 | Each row of the worked examples, as finger events through `LineWriter` | 6.2 | Any placement rule breaks |
+| 2 | A jump in a word gives a letter gap, and a new word gives a word gap, for each method | 6.1.2.1 | Split words, joined words |
+| 3 | Replay recordings against labels, and report errors for each method | 6.1.2.1, 6.2.1 | A method that looks good only by hand |
+| 4 | Row rule: lower row continues, same or higher row starts a new word | 6.1.2.1 | The left-middle conflict |
+| 5 | Dot, crossbar and bowl strokes stay on their letter | 6.1.2 item 10 | Defects 2, 3 and 4 in section 4.1 of the spec |
+| 6 | Two short words do not overlap | 6.1.2 item 7 | Short words stack |
+| 7 | Slow writing does not spread letters | 6.1.2 item 8 | "L a z y" |
+| 8 | A lost finger-up ends the stroke, and the next touch starts a new one | 6.6 | Defect 6 in section 4.1 of the spec |
+| 9 | A second finger has no effect on a stroke | 6.1.2 item 2 | Stray ink |
+| 10 | At a right edge, the word's stroke IDs and offsets are correct | 6.1.4 | Word left behind |
+| 11 | A word wider than the section splits at the edge | 6.1.4 | Endless move loop |
+| 12 | A new line below the bottom asks for a taller board | 6.1.4 | Writing goes off the board |
+| 13 | Line height and thickness are divided by the zoom | 6.1.3 item 7 | Wrong size when zoomed |
+| 14 | Three-column layout gives equal columns and the fixed title box height, also after the board grows | 6.1.5 | Title box changes size |
+| 15 | Undo, redo, erase and clear in order, with the caret back on the right line | 6.1.6, 6.2 | Defects 9 and 10 in section 4.1 of the spec |
+| 16 | Save then open gives the same strokes, colours, layout, name, view and pen colour | 6.1.7 | Lost data |
+| 17 | A failed save leaves the old files readable | 6.6 | A damaged board |
+| 18 | A damaged board lists as damaged, and the others still list | 6.4.1, 6.6 | The home screen stops working |
+| 19 | The list is in order of most recent change, and delete and rename work | 6.4.1 | Wrong board shown |
+
+Owner checks, on the real touchpad:
+
+1. The writing test in spec section 6.2.1, first when the writing is done and again after zoom and saving are in, because writing wins (spec section 3).
+2. Pinch, two-finger scroll and every key in section 3.3.
+3. Five working days of the owner's own notes (spec section 3).
+
+---
+
+## 8. Infrastructure and deployment
+
+The app has no hosted resources, and it uses no Azure services and has no cost.
+
+* **CI:** one GitHub Actions workflow on `windows-latest` runs `dotnet build` and `dotnet test` on each pull request and on `main`. The repository is public, and GitHub's billing documentation says that standard hosted runners are free in public repositories.
+* **Branch protection:** the owner's rule asks for a ruleset on a public repository with CI. Turn it on after the workflow has run once, with the owner's approval, because it changes a repository setting.
+* **Install:** `dotnet publish` to a local folder, with a desktop shortcut. It needs the .NET 10 runtime, which is supported until November 2028.
+* **Build settings:** add `Directory.Packages.props` for package versions, and add the test project to `TrackpadWhiteboard.slnx`.
+
+---
+
+## 9. Risks
+
+Probe results come from a throwaway WPF program, run on the owner's laptop on 6 November 2026. It used 20,000 synthetic strokes of 60 points each.
+
+| Measure | Result |
+| --- | --- |
+| Save to memory on the UI thread | 404 ms, 3 MB |
+| Save on a background thread | Works, 187 ms |
+| Load the ink | 338 ms |
+| Assign the ink and reach the first idle moment | 1,944 ms |
+| Frame time while adding points on the full board | Median 11 ms, 95% within 26 ms, slowest 37 ms |
+| Frame time while zooming the full board | Median 9 ms, 95% within 16 ms, slowest 35 ms |
+| Save and load | Colour, thickness, smoothing and custom data survive. Thickness 1.5 returned as 1.49998, and the one point checked moved by 0.006 units. |
+
+| Risk | Likelihood | Mitigation |
+| --- | --- | --- |
+| No method in spec section 6.1.2.1 passes the writing test | Medium | Record first, compare with replay, and stop and report. Spec section 8 says that the spec then changes. |
+| The row rule makes letters wavy or shaky | Medium | Try it in a short session before fully building it. Keep the method switch until the writing test passes. |
+| Opening a board with 20,000 strokes takes about 2.3 seconds, close to the 3 seconds in spec section 6.5 item 5 | Medium at that size | Measure with real boards. Next option if it is slow: draw finished ink on fewer visuals. |
+| Pinch does not arrive as wheel messages on the owner's touchpad | Low to medium | Test early. The `+` and `-` keys and arrow keys already work. |
+| The probe does not match real use, such as more points in a stroke | Medium | Measure with real boards. Next option if it is slow: draw finished ink on fewer visuals. |
+| The 50 ms in spec section 6.5 item 1 cannot be measured up to the screen itself | Certain | Measure from the touchpad report to the next rendered frame. The display's own delay is not included. The owner's check is the final judge. |
+| Word moves at a right edge are distracting | Medium | The owner tries them during the 5-day use. |
+| The touchpad outline distracts, or its moves along feel jumpy | Medium | The owner judges it in the writing test. Make it fainter, or show it only while no finger touches. |
+| Layout code and word moves make `LineWriter` too large | Medium | Split it when a real boundary appears, with tests already in place. |
+
+### Open questions
+
+| # | Question | Recommendation |
+| --- | --- | --- |
+| Q1 | Design direction in section 3.6. | Resolved: quiet and plain, Microsoft Whiteboard's ideas as the reference, and the touchpad outline as the signature. |
+| Q2 | Opening a very large board took longer than the 2 seconds that spec section 6.5 item 5 allowed. | Resolved: the owner changed it to 3 seconds at 20,000 strokes, and the app shows that the board is opening. |
+| Q3 | Can recordings of the owner's handwriting go in the public repository? | Resolved: yes for the test lines in spec section 6.2.1, which hold no private content. Not for real notes. |
