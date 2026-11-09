@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Board in mouse mode</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F1F1F;text-decoration:none}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; background: #FFFFFF; font-family: 'Segoe UI', system-ui, sans-serif; color: #1F1F1F">
+
+  <div style="position: absolute; left: 96px; top: 84px; font-family: 'Caveat', cursive; font-weight: 700; font-size: 56px; line-height: 90px">
+    <div style="color: #1A1A1A; white-space: nowrap">I am at a desk</div>
+    <div style="color: #1A1A1A; white-space: nowrap">The lazy dog jumps over the fence</div>
+    <div style="color: #1E5BD8; white-space: nowrap">Ollie is writing a square and a triangle</div>
+    <div style="color: #D2322D; white-space: nowrap">Pythagoras drew a rectangle on the whiteboard</div>
+    <div style="color: #1E8A3E; white-space: nowrap">Bright handwriting needs measurements</div>
+  </div>
+
+  <nav aria-label="Tools" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 6px; background: #FFFFFF; border: 1px solid #E1E1DE; border-radius: 16px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08)">
+    <a href="board-writing-mode.dc.html" aria-label="Start writing" style="height: 64px; padding: 0 12px; border-radius: 10px; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; font-size: 14px; font-weight: 600">
+      Write
+      <span style="height: 18px; padding: 0 6px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; font-weight: 400; line-height: 16px; color: #5C5C5C">Caps Lock</span>
+    </a>
+
+    <div style="width: 1px; height: 40px; margin: 0 4px; background: #E1E1DE"></div>
+    <sc-for list="{{pens}}" as="pen" hint-placeholder-count="4">
+      <button type="button" aria-label="{{pen.label}}" aria-pressed="{{pen.selected}}" onClick="{{pen.pick}}" style="width: 56px; height: 64px; border: 0; border-radius: 10px; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: {{pen.color}}; box-shadow: {{pen.ring}}"></span>
+        <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">{{pen.key}}</span>
+      </button>
+    </sc-for>
+
+    <div style="width: 1px; height: 40px; margin: 0 4px; background: #E1E1DE"></div>
+
+    <button type="button" aria-label="Eraser" aria-pressed="{{eraserOn}}" onClick="{{toggleEraser}}" style="width: 56px; height: 64px; border: 0; border-radius: 10px; background: {{eraserBackground}}; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 20l-4-4L14 6l6 6-8 8z"></path><path d="M9 11l6 6"></path><path d="M12 20h8"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">E</span>
+    </button>
+    <button type="button" aria-label="Undo" style="width: 56px; height: 64px; border: 0; border-radius: 10px; background: transparent; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5L4 10l5 5"></path><path d="M4 10h10a5 5 0 0 1 0 10h-3"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">⌫</span>
+    </button>
+    <button type="button" aria-label="Redo" style="width: 56px; height: 64px; border: 0; border-radius: 10px; background: transparent; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l5 5-5 5"></path><path d="M20 10H10a5 5 0 0 0 0 10h3"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">Y</span>
+    </button>
+
+    <div style="width: 1px; height: 40px; margin: 0 4px; background: #E1E1DE"></div>
+
+    <button type="button" aria-label="Zoom out" style="width: 48px; height: 64px; border: 0; border-radius: 10px; background: transparent; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">−</span>
+    </button>
+    <span style="width: 48px; text-align: center; font-size: 14px; color: #1F1F1F">100%</span>
+    <button type="button" aria-label="Zoom in" style="width: 48px; height: 64px; border: 0; border-radius: 10px; background: transparent; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">+</span>
+    </button>
+    <button type="button" aria-label="See the whole board" style="width: 56px; height: 64px; border: 0; border-radius: 10px; background: transparent; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-family: inherit">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">0</span>
+    </button>
+
+    <div style="width: 1px; height: 40px; margin: 0 4px; background: #E1E1DE"></div>
+
+    <a href="home.dc.html" aria-label="Home screen" style="width: 56px; height: 64px; border-radius: 10px; color: #1F1F1F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"></path><path d="M6 10v10h12V10"></path></svg>
+      <span style="min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border: 1px solid #CFCFCB; border-radius: 4px; font-size: 11px; line-height: 16px; color: #5C5C5C; text-align: center">Esc</span>
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { pen: 'Black', eraserOn: false };
+  }
+
+  renderVals() {
+    const pens = [
+      { name: 'Black', color: '#1A1A1A', key: '1' },
+      { name: 'Blue', color: '#1E5BD8', key: '2' },
+      { name: 'Red', color: '#D2322D', key: '3' },
+      { name: 'Green', color: '#1E8A3E', key: '4' }
+    ];
+    return {
+      pens: pens.map((pen) => {
+        const selected = this.state.pen === pen.name;
+        return {
+          ...pen,
+          label: pen.name + ' pen',
+          selected: selected,
+          ring: selected ? '0 0 0 3px #FFFFFF, 0 0 0 5px #1F1F1F' : 'none',
+          pick: () => this.setState({ pen: pen.name, eraserOn: false })
+        };
+      }),
+      eraserOn: this.state.eraserOn,
+      eraserBackground: this.state.eraserOn ? '#EDEDEA' : 'transparent',
+      toggleEraser: () => this.setState({ eraserOn: !this.state.eraserOn })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 > **What this document is for:** It answers *what are we building, and why?* It is agreed before any design or code, and it is the source of truth for requirements.
 
 Status: Approved
-Last updated: 2026-11-06
+Last updated: 2026-11-09
 
 ---
 
@@ -186,7 +186,10 @@ The Caps Lock state belongs to Windows and affects other apps. The app reads the
 3. WHEN writing mode starts and the mouse has not moved, THE SYSTEM SHALL continue the same line.
 4. WHEN Caps Lock is turned off, THE SYSTEM SHALL unlock the cursor, show it at the caret and make the touchpad a normal mouse.
 5. WHEN the window stops being active, THE SYSTEM SHALL finish the current stroke and unlock the cursor. WHEN the window is active again, writing mode follows the Caps Lock state.
-6. WHILE in writing mode, THE SYSTEM SHALL show where the next stroke goes.
+6. WHILE in writing mode, THE SYSTEM SHALL show where the next stroke goes, with the caret and a faint outline of the writing window on the board. This outline is the app's signature detail.
+   * WHEN the row rule (section 6.1.2.1) is used, the outline SHALL show the part of the board that each touchpad row maps to.
+   * The outline SHALL NOT cover the ink so that it is hard to read. It is not part of the board, and it is not saved.
+   * The owner judges during the writing test that the outline helps and does not distract.
 
 #### 6.1.2 Writing
 
@@ -403,7 +406,7 @@ The numbers are proposals for the owner to check.
 2. **Large boards:** with 20,000 strokes on a board, writing response stays within item 1.
 3. **Saving:** saving causes no delay that the owner can see during writing.
 4. **Data safety:** if the app or laptop stops suddenly, the owner loses no more than the last 5 seconds of writing.
-5. **Opening:** a board with 20,000 strokes opens within 2 seconds.
+5. **Opening:** a board with 20,000 strokes opens within 3 seconds. While a board opens, the app shows that it is opening.
 6. **One-handed use:** no daily action needs a key or button held down while the finger moves. Holding a button with the other hand was one of the problems in Paint (section 2.4).
 7. **Few key presses:** writing a line of text needs no key press. Every other daily action needs no more than one key press or one click, except where this document says that the app asks first.
 8. **Privacy:** the app makes no network connection.

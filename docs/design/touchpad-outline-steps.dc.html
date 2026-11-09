@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How the touchpad outline moves</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F1F1F}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="width: 1280px; height: 720px; box-sizing: border-box; padding: 36px 48px; background: #F3F3F1; font-family: 'Segoe UI', system-ui, sans-serif; color: #1F1F1F; display: flex; flex-direction: column; gap: 24px">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 600">How the touchpad outline moves</h1>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <sc-for list="{{dots}}" as="dot" hint-placeholder-count="8">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: {{dot.color}}"></span>
+      </sc-for>
+      <span style="margin-left: 8px; font-size: 14px; color: #5C5C5C">Step {{stepNumber}} of {{stepCount}}</span>
+    </div>
+  </header>
+
+  <section aria-label="Board" style="height: 240px; box-sizing: border-box; padding: 30px 48px; background: #FFFFFF; border: 1px solid #E1E1DE; border-radius: 12px; font-family: 'Caveat', cursive; font-weight: 700; font-size: 56px; line-height: 90px; color: #1A1A1A">
+    <div style="display: flex; align-items: flex-start; height: 90px; white-space: pre">
+      <sc-for list="{{lineOne}}" as="pass" hint-placeholder-count="3">
+        <span style="position: relative; display: inline-block; height: 90px; min-width: 2px; margin-left: {{pass.gap}}">
+          {{pass.text}}
+          <sc-if value="{{pass.box}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="position: absolute; left: -14px; top: 0; width: 150px; height: 90px; box-sizing: border-box; border: 2px solid #5A6E8C; border-radius: 18px; background: rgba(90, 110, 140, 0.04); opacity: 0.45"></span>
+            <span aria-hidden="true" style="position: absolute; left: {{pass.caretLeft}}; top: 20px; width: 2px; height: 50px; border-radius: 1px; background: #5A6E8C; opacity: 0.45"></span>
+          </sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="display: flex; align-items: flex-start; height: 90px; white-space: pre">
+      <sc-for list="{{lineTwo}}" as="pass" hint-placeholder-count="1">
+        <span style="position: relative; display: inline-block; height: 90px; min-width: 2px">
+          {{pass.text}}
+          <sc-if value="{{pass.box}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="position: absolute; left: -14px; top: 0; width: 150px; height: 90px; box-sizing: border-box; border: 2px solid #5A6E8C; border-radius: 18px; background: rgba(90, 110, 140, 0.04); opacity: 0.45"></span>
+            <span aria-hidden="true" style="position: absolute; left: 0; top: 20px; width: 2px; height: 50px; border-radius: 1px; background: #5A6E8C; opacity: 0.45"></span>
+          </sc-if>
+        </span>
+      </sc-for>
+    </div>
+  </section>
+
+  <div style="flex-grow: 1; display: flex; gap: 40px; align-items: stretch">
+    <figure style="margin: 0; display: flex; flex-direction: column; gap: 10px">
+      <div style="position: relative; width: 300px; height: 180px; box-sizing: border-box; background: #FFFFFF; border: 2px solid #CFCFCB; border-radius: 16px; overflow: hidden">
+        <span style="position: absolute; left: 24px; top: 0; font-family: 'Caveat', cursive; font-weight: 700; font-size: 112px; line-height: 180px; color: #9A9A96; white-space: pre">{{padText}}</span>
+        <sc-if value="{{fingerLands}}" hint-placeholder-val="{{false}}">
+          <span style="position: absolute; left: 22px; top: 72px; width: 36px; height: 36px; border-radius: 50%; background: rgba(30, 91, 216, 0.18); border: 2px solid #1E5BD8; box-sizing: border-box"></span>
+        </sc-if>
+      </div>
+      <figcaption style="font-size: 14px; color: #5C5C5C">{{padLabel}}</figcaption>
+    </figure>
+
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">{{title}}</h2>
+        <p style="margin: 0; font-size: 18px; line-height: 28px; max-width: 640px">{{caption}}</p>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <button type="button" onClick="{{back}}" style="height: 44px; padding: 0 20px; border-radius: 10px; border: 1px solid #D6D6D2; background: #FFFFFF; color: #1F1F1F; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Back</button>
+        <button type="button" onClick="{{next}}" style="height: 44px; padding: 0 20px; border-radius: 10px; border: 0; background: #1F1F1F; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 0 };
+  }
+
+  renderVals() {
+    const letterGap = '10px';
+    const wordGap = '40px';
+    const pyth = { text: 'Pyth', gap: '0px' };
+    const agor = { text: 'agor', gap: letterGap };
+    const as = { text: 'as', gap: letterGap };
+
+    const steps = [
+      { title: 'Writing mode starts',
+        caption: 'The outline shows the part of the board that your touchpad maps to. The caret is at its left edge.',
+        lineOne: [{ text: '', gap: '0px', box: true }], lineTwo: [], padText: '', fingerLands: false },
+      { title: 'You write a pass',
+        caption: 'You write "Pyth" across the touchpad. The ink appears inside the outline, at the same place as your finger on the touchpad. The outline does not move while you write.',
+        lineOne: [{ ...pyth, box: true }], lineTwo: [], padText: 'Pyth', fingerLands: false },
+      { title: 'Your finger lands on the left again',
+        caption: 'You reached the right side of the touchpad. When your finger lands on the left again, the outline jumps along to the caret, after "Pyth".',
+        lineOne: [pyth, { text: '', gap: letterGap, box: true }], lineTwo: [], padText: '', fingerLands: true },
+      { title: 'The word continues',
+        caption: 'You write "agor". It joins "Pyth" with a letter gap, as part of the same word.',
+        lineOne: [pyth, { ...agor, box: true }], lineTwo: [], padText: 'agor', fingerLands: false },
+      { title: 'A long word in three passes',
+        caption: 'The outline jumps along once more, and you write "as". "Pythagoras" is one word, written in three passes of the touchpad.',
+        lineOne: [pyth, agor, { ...as, box: true }], lineTwo: [], padText: 'as', fingerLands: false },
+      { title: 'A new word',
+        caption: 'You go back to the left to start a new word. The app leaves a word gap, and the outline jumps along after it. How the app tells a new word from a jump in a word is still to be tested (spec section 6.1.2.1).',
+        lineOne: [pyth, agor, as, { text: '', gap: wordGap, box: true }], lineTwo: [], padText: '', fingerLands: true },
+      { title: 'You write the new word',
+        caption: 'You write "drew" inside the outline.',
+        lineOne: [pyth, agor, as, { text: 'drew', gap: wordGap, box: true }], lineTwo: [], padText: 'drew', fingerLands: false },
+      { title: 'You press Enter',
+        caption: 'The outline jumps to the left end of the next line. At the right edge of a column, the same happens with no key press.',
+        lineOne: [pyth, agor, as, { text: 'drew', gap: wordGap }], lineTwo: [{ text: '', box: true }], padText: '', fingerLands: false }
+    ];
+
+    const index = this.state.step;
+    const step = steps[index];
+    const withCaret = (pass) => ({ ...pass, box: pass.box === true, caretLeft: pass.text === '' ? '0px' : 'calc(100% + 8px)' });
+
+    return {
+      title: step.title,
+      caption: step.caption,
+      lineOne: step.lineOne.map(withCaret),
+      lineTwo: step.lineTwo.map(withCaret),
+      padText: step.padText,
+      fingerLands: step.fingerLands,
+      padLabel: step.fingerLands ? 'Touchpad: the finger lands on the left' : 'Touchpad',
+      stepNumber: index + 1,
+      stepCount: steps.length,
+      dots: steps.map((s, i) => ({ color: i === index ? '#1F1F1F' : '#CFCFCB' })),
+      back: () => this.setState({ step: Math.max(0, index - 1) }),
+      next: () => this.setState({ step: Math.min(steps.length - 1, index + 1) })
+    };
+  }
+}
+</script>
+</body>
+</html>

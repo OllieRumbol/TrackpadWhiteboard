@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F1F1F;text-decoration:none}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="width: 1280px; height: 720px; box-sizing: border-box; background: #F3F3F1; font-family: 'Segoe UI', system-ui, sans-serif; color: #1F1F1F; padding: 40px 48px; display: flex; flex-direction: column; gap: 28px">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 600">Trackpad Whiteboard</h1>
+    <div style="display: flex; gap: 12px">
+      <a href="board-mouse-mode.dc.html" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; background: #1F1F1F; color: #FFFFFF; font-size: 14px; font-weight: 600">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 2v12M2 8h12"></path></svg>
+        Blank board
+      </a>
+      <a href="three-columns.dc.html" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; background: #FFFFFF; border: 1px solid #D6D6D2; color: #1F1F1F; font-size: 14px; font-weight: 600">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 2v12M2 8h12"></path></svg>
+        Three columns
+      </a>
+    </div>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px">
+    <sc-for list="{{boards}}" as="b" hint-placeholder-count="6">
+      <article style="background: #FFFFFF; border: 1px solid #E1E1DE; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column">
+        <sc-if value="{{b.isBlank}}" hint-placeholder-val="{{true}}">
+          <a href="board-mouse-mode.dc.html" aria-label="Open {{b.name}}" style="display: block; height: 150px; box-sizing: border-box; padding: 14px 16px; border-bottom: 1px solid #EDEDEA; font-family: 'Caveat', cursive; font-weight: 700; font-size: 22px; line-height: 26px; overflow: hidden">
+            <sc-for list="{{b.lines}}" as="line" hint-placeholder-count="3">
+              <div style="color: {{line.color}}; white-space: nowrap">{{line.text}}</div>
+            </sc-for>
+          </a>
+        </sc-if>
+        <sc-if value="{{b.isColumns}}" hint-placeholder-val="{{false}}">
+          <a href="three-columns.dc.html" aria-label="Open {{b.name}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: 150px; border-bottom: 1px solid #EDEDEA; font-family: 'Caveat', cursive; font-weight: 700; font-size: 18px; line-height: 20px; overflow: hidden">
+            <sc-for list="{{b.cols}}" as="col" hint-placeholder-count="3">
+              <div style="border-left: 1px solid #E1E1DE; display: flex; flex-direction: column">
+                <div style="height: 40px; box-sizing: border-box; padding: 8px 8px 0; border-bottom: 1px solid #E1E1DE; color: {{col.color}}">{{col.title}}</div>
+                <div style="padding: 6px 8px; color: #1A1A1A">{{col.item}}</div>
+              </div>
+            </sc-for>
+          </a>
+        </sc-if>
+        <sc-if value="{{b.isDamaged}}" hint-placeholder-val="{{false}}">
+          <div style="height: 150px; box-sizing: border-box; border-bottom: 1px solid #EDEDEA; background: #F7F7F5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #5C5C5C; font-size: 14px">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17.5v.5"></path></svg>
+            This board is damaged and cannot open
+          </div>
+        </sc-if>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 10px 8px 10px 16px">
+          <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.name}}</div>
+            <div style="font-size: 14px; color: #5C5C5C">{{b.changed}}</div>
+          </div>
+          <button type="button" aria-label="Rename or delete {{b.name}}" style="width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: #5C5C5C; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="4" cy="10" r="1.6"></circle><circle cx="10" cy="10" r="1.6"></circle><circle cx="16" cy="10" r="1.6"></circle></svg>
+          </button>
+        </div>
+      </article>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const black = '#1A1A1A';
+    const blue = '#1E5BD8';
+    const red = '#D2322D';
+    const green = '#1E8A3E';
+    const boards = [
+      { kind: 'blank', name: '2026-11-09 08:45', changed: 'Changed 9 Nov 2026, 08:52',
+        lines: [
+          { text: 'I am at a desk', color: black },
+          { text: 'The lazy dog jumps over the fence', color: black },
+          { text: 'Ollie is writing a square', color: blue },
+          { text: 'and a triangle', color: blue },
+          { text: 'Pythagoras drew a rectangle', color: red }
+        ] },
+      { kind: 'columns', name: '2026-11-08 19:20', changed: 'Changed 8 Nov 2026, 19:41',
+        cols: [
+          { title: 'square', color: blue, item: 'a desk' },
+          { title: 'triangle', color: red, item: 'the fence' },
+          { title: 'rectangle', color: green, item: 'a big tent' }
+        ] },
+      { kind: 'blank', name: '2026-11-07 14:02', changed: 'Changed 7 Nov 2026, 14:30',
+        lines: [
+          { text: 'Bright handwriting', color: black },
+          { text: 'needs measurements', color: black },
+          { text: 'Tim Jill Pat and Rob', color: green },
+          { text: 'sit in a big tent', color: green }
+        ] },
+      { kind: 'blank', name: '2026-11-06 21:04', changed: 'Changed 6 Nov 2026, 21:17',
+        lines: [
+          { text: 'Pythagoras drew a rectangle', color: black },
+          { text: 'on the whiteboard', color: black }
+        ] },
+      { kind: 'columns', name: '2026-11-05 10:30', changed: 'Changed 5 Nov 2026, 11:02',
+        cols: [
+          { title: 'Tim', color: black, item: 'a square' },
+          { title: 'Jill', color: blue, item: 'a triangle' },
+          { title: 'Pat', color: red, item: 'a desk' }
+        ] },
+      { kind: 'damaged', name: '2026-11-04 16:15', changed: 'Changed 4 Nov 2026, 16:20' }
+    ];
+    return {
+      boards: boards.map((b) => ({
+        ...b,
+        isBlank: b.kind === 'blank',
+        isColumns: b.kind === 'columns',
+        isDamaged: b.kind === 'damaged'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
