@@ -288,7 +288,7 @@ Owner checks, on the real touchpad:
 The app has no hosted resources, and it uses no Azure services and has no cost.
 
 * **CI:** one GitHub Actions workflow on `windows-latest` runs `dotnet build` and `dotnet test` on each pull request and on `main`. The repository is public, and GitHub's billing documentation says that standard hosted runners are free in public repositories.
-* **Branch protection:** the owner's rule asks for a ruleset on a public repository with CI. Turn it on after the workflow has run once, with the owner's approval, because it changes a repository setting.
+* **Branch protection:** the ruleset "Protect main" has been active since 9 November 2026, at the owner's request. It requires a pull request with 0 approvals, blocks force pushes and deletion, and has no bypass. After the CI workflow has run once, add its build and test job as a required status check, with the owner's approval, because it changes a repository setting.
 * **Install:** `dotnet publish` to a local folder, with a desktop shortcut. It needs the .NET 10 runtime, which is supported until November 2028.
 * **Build settings:** add `Directory.Packages.props` for package versions, and add the test project to `TrackpadWhiteboard.slnx`.
 
