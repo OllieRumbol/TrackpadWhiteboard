@@ -185,18 +185,18 @@ A recording is one JSON object per line, with the raw values:
 
 The owner chose the character, the reference and the signature, and approved the mock-ups on 9 November 2026. The owner still signs off the look of each real screen.
 
-**Mock-ups:** `docs/design/` holds the four approved screens: `home.dc.html`, `board-mouse-mode.dc.html`, `board-writing-mode.dc.html` and `three-columns.dc.html`. They are the source files of the owner's private design canvas, and they render only there. Screen tasks build to them. When a mock-up and the spec disagree, the spec wins. The ink in them is a handwriting font with the writing-test lines, and the board names are sample values.
+**Mock-ups:** `docs/design/` holds the four approved screens: `home.dc.html`, `board-mouse-mode.dc.html`, `board-writing-mode.dc.html` and `three-columns.dc.html`. They are the source files of the owner's private design canvas, and they render only there. Screen tasks build to them. When a mock-up and the spec disagree, the spec wins. The ink in them is a handwriting font with the writing-test lines, and the board names are sample values. The fifth file, `touchpad-outline-steps.dc.html`, shows in 8 steps how the touchpad outline moves while the owner writes. Its letter and word gaps are approximate.
 
 | Item | Proposal |
 | --- | --- |
 | References | Chosen by the owner: Microsoft Whiteboard. Take its ideas, not its look: a light board with a lot of space, one small floating pen tray, and slim controls at the edges. The owner wants the app to feel unique and fresh. |
 | Tools | Approved in the mock-ups: one floating tray at the bottom centre in mouse mode, with Write, the four pens, eraser, undo, redo, zoom out, the zoom level, zoom in, whole board and home. Each button shows its key, so the tray also teaches the keys. Clear the board is on the Delete key only. In writing mode the tray hides, and a small "Writing" sign with the pen colour takes its place. Nothing sits in the top-left corner, where a new board starts. |
 | Character | Chosen by the owner: quiet and plain, like a clean whiteboard in a room. The ink is the main thing on the screen. |
-| Signature | Chosen by the owner: the touchpad outline. In writing mode, a faint rounded frame on the board shows the writing window, so the owner sees where the next stroke lands (spec section 6.1.1 item 6). It moves with the writing window, and it is drawn on a layer above the ink that is not saved. |
+| Signature | Chosen by the owner: the touchpad outline. In writing mode, a faint rounded frame on the board shows the writing window, so the owner sees where the next stroke lands (spec section 6.1.1 item 6). It works like a large text cursor, not a mouse pointer: it stays still while a pass is written, and moves only when the writing window moves along (a new stroke starts on the left, Enter, or a right edge). It is drawn on a layer above the ink that is not saved. |
 | Type | Segoe UI, because it is already on Windows. Sizes 11 (key labels), 14 (body and buttons), 18 (board names) and 28 (home screen title). Weights 400 and 600. |
 | Colour | App background `#F3F3F1`. Board, cards and tray `#FFFFFF`. Text `#1F1F1F`. Secondary text `#5C5C5C`. Borders `#E1E1DE`, button border `#D6D6D2`, key labels and board dividing lines `#CFCFCB`. Selected tool `#EDEDEA`. Primary button `#1F1F1F` with white text. Ink only: black `#1A1A1A`, blue `#1E5BD8`, red `#D2322D`, green `#1E8A3E`. Touchpad outline and caret `#5A6E8C` at 45% opacity. |
 | Sizes | Tray buttons 56 × 64, other buttons at least 44 high. Corner radius 10 for buttons, 12 for cards, 16 for the tray and 18 for the touchpad outline. Board dividing lines 2 wide. |
-| Motion | None while writing. A short zoom to a board when it opens, if it causes no delay. |
+| Motion | None while writing. Chosen by the owner on 9 November 2026: the touchpad outline and the caret jump to their new place, with no slide. A short zoom to a board when it opens, if it causes no delay. |
 | Avoid | Full-width toolbars, dialogs, dark or decorated backgrounds, dots or grids on the board, and copying Microsoft Whiteboard's look. |
 | Content | The owner's own boards. |
 
