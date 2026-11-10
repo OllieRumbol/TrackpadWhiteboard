@@ -3,7 +3,7 @@
 > **What this document is for:** It answers *what are we building, and why?* It is agreed before any design or code, and it is the source of truth for requirements.
 
 Status: Approved
-Last updated: 2026-11-09
+Last updated: 2026-11-10
 
 ---
 
@@ -339,6 +339,8 @@ A right edge is the right edge of the section that holds the line. On a blank bo
 
 The owner writes these lines at normal speed, with no key press except Enter between lines. Together they hold 41 words and every word length from 1 to 12 letters.
 
+Until the app continues at a right edge by itself (section 6.1.4), the owner can also press Enter at a word gap when a line nears the right side of the screen. Chosen by the owner on 10 November 2026, because the longer lines do not fit on one screen.
+
 | Line | Text | Checks |
 | --- | --- | --- |
 | 1 | I am at a desk | 1, 2 and 4 letters |
@@ -426,6 +428,7 @@ The numbers are proposals for the owner to check.
 | The pointer is outside the board when Caps Lock is turned on | The new line starts at the nearest point on the board. |
 | Backspace with no strokes | Nothing happens. |
 | Backspace during a stroke | Nothing happens. |
+| The owner leaves a board, then opens it again | Undo and redo start empty. A clear that was not undone before leaving cannot be undone. Chosen by the owner on 10 November 2026. |
 | A board cannot be saved, for example the disk is full | The app shows a message, keeps the board open and tries again. |
 | A board file is damaged | The home screen shows it as damaged. The app does not stop. |
 | Two boards have the same name | Allowed. |
