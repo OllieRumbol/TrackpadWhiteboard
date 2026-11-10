@@ -17,9 +17,9 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
   - Depends on: —
   - Done when:
     - `tests/TrackpadWhiteboard.App.Tests` is an MSTest project with the Windows target. It is in `TrackpadWhiteboard.slnx`, and it can see the app's internal types.
-    - `Directory.Packages.props` holds the package versions.
+    - `Directory.Packages.props` holds the package versions, and `global.json` pins the .NET 10 SDK.
     - One test passes on `LineWriter` as it is today: Enter starts a new line at the same left end.
-    - A GitHub Actions workflow runs `dotnet build` and `dotnet test` on `windows-latest` for each pull request and for `main`. It passed on this task's pull request.
+    - A GitHub Actions workflow runs `dotnet build` and `dotnet test` on `windows-latest` for each pull request and for `main`, with the SDK from `global.json`. It passed on this task's pull request.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`
   - Notes: After the workflow has run once, ask the owner before adding it as a required status check on `main` (plan 8).
 
@@ -29,19 +29,21 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
   - Done when:
     - The files are in the folders in plan 3.1: `Input/`, `Writing/` and `Interop/`.
     - `BoardScreen` holds the Caps Lock and cursor lock flow. `MainWindow` holds the current screen and the window message hook.
+    - `KeyMap` maps Space, Enter, Backspace and Delete. The tuning keys stay outside it.
     - The tuning keys and the status bar still work, from outside `MainWindow`.
     - The owner's check: one line of spec section 6.2.1 writes the same as before.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
   - Notes: No change in behaviour.
 
 - [ ] **T3 — Fix the touchpad input defects**
-  - Refs: spec 4.1 defect 6, spec 6.1.1 items 1–5, spec 6.1.2 items 1–2, spec 6.6, plan 4, plan 5, plan 7.2 tests 8–9
+  - Refs: spec 4.1 defect 6, spec 6.1.1 items 1–5, spec 6.1.2 items 1–2, spec 6.6, plan 3.2 (`TouchpadReader.cs`, `MainWindow.xaml.cs:60`), plan 3.3 (`ContactTracker`, `TouchpadDetector`), plan 3.5 (clicks in writing mode, finding the touchpad), plan 4, plan 5, plan 7.2 tests 8, 9 and 21
   - Depends on: T2
   - Done when:
+    - The frame logic is in `ContactTracker`, and tests feed it frames.
     - When a complete frame does not hold the tracked finger, the stroke ends, and the next touch starts a new stroke (test 8).
     - A second finger has no effect on a stroke (test 9).
     - Tap-to-click has no effect on the board in writing mode.
-    - With no precision touchpad, the board screen shows the message in spec section 6.6.
+    - With no precision touchpad, or when Raw Input registration fails, the board screen shows the message in plan 4 when Caps Lock turns on (test 21).
     - The status bar shows the time from the touchpad report to the next rendered frame.
     - The owner's check: spec section 6.1.1 items 1 to 5 hold, and tap-to-click does nothing.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
@@ -51,7 +53,7 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
   - Refs: plan 3.1, plan 3.4 (recording), plan 3.5 (finding and labelling), plan 6 (recordings)
   - Depends on: T3
   - Done when:
-    - In writing mode, when recording is on, each touchpad event goes to a new file in the local `Recordings\` folder, in the format in plan 3.4.
+    - In writing mode, when recording is on, each touchpad event and each Enter and Space press goes to a new file in the local `Recordings\` folder, in the format in plan 3.4.
     - A test shows that a recording reads back as the same events.
     - The app makes a picture of a recording's strokes, numbered in order, for labelling.
     - The status bar time from T3 does not grow while recording.
@@ -62,7 +64,7 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
   - Refs: spec 6.2.1, plan 3.5, plan 6
   - Depends on: T4
   - Done when:
-    - The owner has recorded each of the six lines in spec section 6.2.1 at least twice, at normal speed.
+    - The owner has recorded each of the six lines in spec section 6.2.1 at least twice, at normal speed. Enter at a word gap is allowed, as in T11.
     - Each recording has labels, made from its numbered picture.
     - The recordings and labels are in `tests/TrackpadWhiteboard.App.Tests/TestData/Recordings/`.
   - Verify: The owner confirms that each committed recording holds only the test lines.
@@ -83,6 +85,7 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
   - Refs: plan 3.5, plan 7.1, plan 7.2 test 3, spec 6.2.1 (errors)
   - Depends on: T5, T6
   - Done when:
+    - The rules that turn each error kind in spec section 6.2.1 into a measure are in plan 3.5, with the owner's approval. For example, the gap width that counts as a split word or as joined words.
     - A test replays each recording through `LineWriter` and compares the result with its labels.
     - For each recording and each word boundary method that exists, it reports the errors in spec section 6.2.1: split words, joined words, overlaps and misplaced strokes.
     - The score of the current behaviour is in the pull request, as the baseline.
@@ -96,11 +99,12 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
     - The five worked examples in Refs pass as tests.
     - A later stroke that reaches left of the caret is corrected, not only the first stroke after moving along.
     - The replay has no more misplaced strokes than the baseline.
+    - The replay reports how many strokes jump at lift, as plan 3.5 says.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`
-  - Notes: If the first test in plan 3.5 fails on the recordings, propose a replacement and update plan 3.5. The owner judges spec section 6.1.2 item 12 in T11.
+  - Notes: If the first test in plan 3.5 fails on the recordings, propose a replacement and update plan 3.5. A rare jump at lift is accepted. The owner judges spec section 6.1.2 item 12 in T11.
 
 - [ ] **T9 — Tell a jump in a word from a new word: method 1**
-  - Refs: spec 6.1.2 items 3–7, spec 6.1.2.1 (method 1), spec 6.2 ("I am", "Ollie", "Pythagoras", "Hello world"), plan 7.2 tests 2 and 6
+  - Refs: spec 4.1 defect 1, spec 6.1.2 items 3–7, spec 6.1.2.1 (method 1), spec 6.2 ("I am", "Ollie", "Pythagoras", "Hello world"), plan 3.5 (moving along and the gap), plan 7.2 tests 2 and 6
   - Depends on: T8
   - Done when:
     - The four worked examples in Refs pass as tests.
@@ -123,24 +127,25 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
   - Notes:
 
 - [ ] **T11 — Run the writing test**
-  - Refs: spec 6.2.1, spec 6.1.1 item 6, spec 6.1.2 item 12, spec 6.5 item 1, plan 7.2 owner check 1, plan 9
+  - Refs: spec 4.1 defect 13, spec 6.2.1, spec 6.1.1 item 6, spec 6.1.2 item 12, spec 6.5 item 1, plan 7.2 owner check 1, plan 9 (outline and gesture risks)
   - Depends on: T9, T10
   - Done when:
     - The owner writes the six lines on two runs in a row, with no more than 2 errors in each run.
     - The owner says that the writing feels free and easy.
     - The owner says that the outline helps and does not distract, and that letters do not jump when the finger lifts.
     - The status bar times are within 50 ms, and the owner sees no lag.
+    - The owner says whether a capital "T" still looks like a "1" (spec 4.1 defect 13), and whether a three-finger gesture fired by mistake.
     - The errors, the times and the tuning values used are in the pull request.
   - Verify: The owner's check, as above
-  - Notes: Manual task. If the test fails, stop and report. The next method is under "Blocked". The owner can change the numbers and lines in spec section 6.2.1.
+  - Notes: Manual task. The right edge comes in T15, so the owner may press Enter at a word gap near the right side of the screen (spec section 6.2.1). If the test fails, stop and report. The next method is under "Blocked". The owner can change the numbers and lines in spec section 6.2.1.
 
 - [ ] **T12 — Fix the writing values and remove the tuning keys**
-  - Refs: spec 6.1.8 items 1, 2 and 4, plan 2, plan 3.2, plan 3.5 (word boundary methods)
+  - Refs: spec 4.1 defect 11, spec 6.1.2 item 15, spec 6.1.8 items 1, 2 and 4, plan 2, plan 3.2, plan 3.3 (`KeyMap`), plan 3.5 (word boundary methods, moving along and the gap), plan 7.2 test 22
   - Depends on: T11
   - Done when:
-    - The values from the passed writing test are constants in code.
-    - The tuning keys, the status bar and the methods that did not win are removed.
-    - A test shows that letter and punctuation keys do not change how writing behaves.
+    - The values from the passed writing test are constants in code. The default look is still the spike's thick black pen with smooth curves.
+    - The tuning keys, the status bar, and the `AdvanceMode` and `WordBoundaryMethod` values that did not win are removed.
+    - Letter and punctuation keys do not change how writing behaves (test 22, for the keys that exist so far).
   - Verify: `dotnet test TrackpadWhiteboard.slnx`
   - Notes: The keys `1`–`4`, `E`, `Y` and `0` are free for stage 2 only after this task.
 
@@ -156,7 +161,7 @@ Goal: the owner has a large board, can zoom and move around it, and writing stay
     - In mouse mode, pinch and `+`/`-` zoom, two-finger scroll and the arrow keys move the view, and `0` shows the whole board.
     - Zoom and view moves do not change the ink, and ink stays sharp at every zoom level.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check of pinch and scroll
-  - Notes: Check pinch first (plan 9). If it does not arrive as wheel messages, stop and report. The plan does not set the lowest and highest zoom. Propose them in this task, and add them to plan 3.5.
+  - Notes: Check pinch first (plan 9): it must arrive as wheel messages with `MK_CONTROL` set (plan 3.5). If it does not, stop and report. The plan does not set the lowest and highest zoom. Propose them in this task, and add them to plan 3.5.
 
 - [ ] **T14 — Write at any zoom, with the writing on the screen**
   - Refs: spec 6.1.3 items 6–8, spec 6.6 (pointer outside the board, window changes size), plan 3.5 (same size on the screen), plan 7.2 test 13
@@ -192,12 +197,14 @@ Goal: the owner has a large board, can zoom and move around it, and writing stay
   - Notes: The palette and the shown colour (spec 6.1.6 items 2–3) come with the tray in T22.
 
 - [ ] **T17 — Add undo, redo, the eraser and clear**
-  - Refs: spec 4.1 defect 9, spec 6.1.6 items 6–9, spec 6.6 (Backspace rows), plan 3.1 (`UndoHistory`), plan 3.3 (keys), plan 3.5 (clear the board), plan 7.2 test 15
+  - Refs: spec 4.1 defects 9 and 10, spec 6.1.6 items 6–9, spec 6.6 (Backspace rows, and leaving a board), plan 3.1 (`UndoHistory`), plan 3.3 (keys and `LineWriter`), plan 3.5 (clear the board, lines after undo and redo, clicks in writing mode), plan 7.2 tests 15 and 24
   - Depends on: T15, T16
   - Done when:
     - Backspace undoes the last stroke and moves the caret back on that stroke's line, in both modes.
-    - `Y` brings back the last stroke that was undone or erased.
+    - `Y` brings back the last stroke that was undone or erased, and the caret goes to the end of that stroke's line.
+    - After a clear is undone, writing starts on a new line below the ink.
     - `E` turns the eraser on or off in mouse mode, and a click erases one whole stroke.
+    - With the eraser on, a tap-to-click in writing mode erases nothing (test 24).
     - Delete clears the board, and one undo brings it back.
     - Backspace with no strokes, or during a stroke, does nothing.
     - Test 15 passes.
@@ -209,60 +216,66 @@ Goal: the owner has a large board, can zoom and move around it, and writing stay
 Goal: every board is kept, and the owner finds and opens it from the home screen (spec section 3, goal 3).
 
 - [ ] **T18 — Save and open boards**
-  - Refs: spec 6.1.6 item 4 (opened board), spec 6.1.7 items 1, 4 and 5, plan 3.3 (`BoardStore`), plan 3.4, plan 3.5 (ink store, details store), plan 4 (saving and damaged files), plan 7.2 tests 16–17
+  - Refs: spec 6.1.6 item 4 (opened board), spec 6.1.7 items 1, 4 and 5, plan 2 (data folder), plan 3.3 (`BoardStore`, `BoardSnapshot`, stroke IDs), plan 3.4, plan 3.5 (ink store, details store), plan 4 (saving and damaged files), plan 7.2 tests 16–17
   - Depends on: T17
   - Done when:
-    - `BoardStore` saves and opens boards in the folders and files in plan 3.4.
+    - `BoardStore` saves and opens boards in the folders and files in plan 3.4. It takes the data folder in its constructor, and tests give it a temporary folder.
+    - Strokes keep their IDs as custom stroke data, and a moved copy keeps its ID.
     - Save then open gives the same strokes, colours, layout, name, view and pen colour (test 16).
     - Files are written to a `.tmp` name first, and a failed save leaves the old files readable (test 17).
   - Verify: `dotnet test TrackpadWhiteboard.slnx`
   - Notes:
 
 - [ ] **T19 — Save while the owner writes**
-  - Refs: spec 6.1.7 items 2–3, spec 6.5 items 3–4, spec 6.6 (board cannot be saved), plan 3.5 (saving, moves during saving), plan 4
+  - Refs: spec 6.1.7 items 2–3, spec 6.5 items 3–4, spec 6.6 (board cannot be saved, laptop sleeps), plan 3.3 (`BoardSaver`), plan 3.5 (saving, saving steps, moves during saving), plan 4, plan 7.2 test 20
   - Depends on: T18
   - Done when:
-    - The board saves from a snapshot on a background thread, at most every 3 seconds after a stroke ends, and when the owner leaves the board.
-    - A failed save shows a message, keeps the board open, tries again and is logged.
+    - `BoardSaver` follows the saving steps in plan 3.5: every change in step 1 is saved from a snapshot on a background thread, at most every 3 seconds, one save at a time, without the stroke being drawn (test 20, with `FakeTimeProvider`).
+    - The board saves at once when the window stops being active, when the owner leaves the board, and when the app closes.
+    - A failed save shows a message, keeps the board open, tries again and is logged. If the last save fails when the owner leaves or closes, the app stays on the board.
     - When the app is stopped by force, no more than the last 5 seconds of writing are lost.
     - The owner's check: no delay while writing on a large board.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
   - Notes:
 
 - [ ] **T20 — Build the home screen**
-  - Refs: spec 6.3, spec 6.4.1, spec 6.4.2 (back to home), spec 6.5 item 5 (opening sign), spec 6.6 (Caps Lock on at start, damaged file, same name, same board twice), plan 3.1 (`Screens/`), plan 3.3 (Esc), plan 3.4 (`preview.png`), plan 3.6, plan 4, plan 7.2 tests 18–19, mock-up `home.dc.html`
+  - Refs: spec 6.3, spec 6.4.1, spec 6.4.2 (back to home), spec 6.5 item 5 (opening sign), spec 6.6 (Caps Lock on at start, damaged file, same name, same board twice), plan 3.1 (`Screens/`), plan 3.3 (Esc), plan 3.4 (`preview.png`), plan 3.5 (preview picture), plan 3.6 (empty home screen, access), plan 4 (names, rename or delete fails), plan 7.2 tests 18–19, mock-up `home.dc.html`
   - Depends on: T19
   - Done when:
     - The app starts on the home screen. It lists every board, most recently changed first, with a preview, name and last-changed time (test 19).
+    - The preview is made when the owner leaves a board or closes the app.
     - New board opens a blank board at once, named from the date and time.
-    - Open, rename and delete work. Delete asks first.
+    - Open, rename and delete work. Delete asks first. Names, and a failed rename or delete, behave as plan 4 says.
     - The empty state and damaged boards show as spec section 6.4.1 says (test 18).
     - While a board opens, the app shows that it is opening.
     - Esc in mouse mode goes back to the home screen.
-    - The owner signs off the look against the mock-up.
+    - Each button has an automation name and a left-to-right focus order.
+    - The owner signs off the look against the mock-up, and the empty state, which has no mock-up.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
   - Notes: If the task grows beyond one session, split the previews into their own task.
 
 - [ ] **T21 — Make the app safe to close, sleep and restart**
-  - Refs: spec 6.5 item 8, spec 6.6 (second copy, app closes, laptop sleeps, window size, other screen), plan 3.5 (one running copy, start-up), plan 4, plan 5, plan 6
+  - Refs: spec 6.5 item 8, spec 6.6 (second copy, app closes, laptop sleeps, window size, other screen), plan 3.5 (one running copy, start-up), plan 4, plan 5, plan 6, plan 7.2 test 25
   - Depends on: T20
   - Done when:
     - A second copy brings the first one to the front and stops.
     - One handler logs an unexpected exception, releases the cursor, tries a last save and shows a message.
     - Closing in writing mode releases the cursor and saves.
-    - `Logs\app.log` holds errors, warnings, the slowest writing response in each session and each save over 1 second. It holds no ink or board names.
+    - `Logs\app.log` holds errors, warnings, the slowest writing response in each session and each save over 1 second. It holds no ink or board names, and it is kept under the size limit in plan 5.
+    - The app's assembly references no networking types (test 25).
     - The owner's check: sleep and lock in writing mode end the stroke, free the cursor and save. A window size change or a move to another screen does not change the ink.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
   - Notes: If sleep or lock does not run the deactivate flow, handle the Windows session events (plan 4).
 
 - [ ] **T22 — Add the tool tray and the writing sign**
-  - Refs: spec 6.1.6 items 2–3, spec 6.4.2, spec 6.5 items 6–7, plan 3.6 (tools, type, colour, sizes), mock-ups `board-mouse-mode.dc.html` and `board-writing-mode.dc.html`
+  - Refs: spec 6.1.6 items 2–3, spec 6.4.2, spec 6.5 items 6–7, plan 3.6 (tools, type, colour, sizes, access), mock-ups `board-mouse-mode.dc.html` and `board-writing-mode.dc.html`
   - Depends on: T20
   - Done when:
-    - In mouse mode, a floating tray at the bottom centre holds each tool in plan 3.6, with its key. One click does each action.
+    - In mouse mode, a floating tray at the bottom centre holds each tool in plan 3.6, with its key. One click does each action, except Write, which is a label only.
     - The tray shows the selected pen colour.
     - In writing mode the tray hides, and the "Writing" sign with the pen colour shows.
     - Nothing sits in the top-left corner.
+    - Each tray button has an automation name and a left-to-right focus order.
     - The owner signs off the look against the mock-ups.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
   - Notes:
@@ -285,11 +298,11 @@ Goal: the three-column layout and the settings view work, the numbers in spec se
   - Notes:
 
 - [ ] **T24 — Add the settings view**
-  - Refs: spec 6.1.8 item 3, plan 2, plan 3.1 (`Settings/`, `SettingsView`), plan 4 (`settings.json`)
+  - Refs: spec 6.1.8 item 3, plan 2, plan 3.1 (`Settings/`, `SettingsView`), plan 4 (`settings.json`), plan 7.2 test 23
   - Depends on: T20
   - Done when:
     - A simple settings view changes pen thickness and line height, and they are kept in `settings.json`.
-    - A `settings.json` that cannot be read gives the defaults, and is logged.
+    - A `settings.json` that cannot be read gives the defaults, and is logged (test 23).
     - The owner signs off the look.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check
   - Notes: No mock-up exists, and the plan does not say where the view opens from. Show the owner a mock-up first, and record the result in plan 3.6.
@@ -298,7 +311,8 @@ Goal: the three-column layout and the settings view work, the numbers in spec se
   - Refs: spec 6.5 items 1–5, plan 5, plan 9
   - Depends on: T19, T21
   - Done when:
-    - On a board with 20,000 strokes, writing response, saving and opening are measured on the owner's laptop.
+    - A test helper makes a board with 20,000 strokes of 60 points each, as the probe in plan 9 did.
+    - On that board, writing response, saving and opening are measured on the owner's laptop.
     - Each number in spec section 6.5 is met, or the owner approves a change to it.
     - The results are in the pull request.
   - Verify: The measurements, as above
@@ -308,8 +322,8 @@ Goal: the three-column layout and the settings view work, the numbers in spec se
   - Refs: plan 7.2 owner checks 1–2, plan 8 (install), spec 6.2.1
   - Depends on: T22, T23, T24, T25
   - Done when:
-    - `README.md` says how to publish the app to a local folder and add a desktop shortcut.
-    - The owner passes the writing test again, with zoom and saving in place.
+    - `README.md` says how to publish the app to a dated local folder, add a desktop shortcut, and roll back (plan 8).
+    - The owner passes the writing test again, with zoom and saving in place, and with no Enter inside a line.
     - The owner checks pinch, two-finger scroll and every key in plan 3.3.
   - Verify: The owner's check, as above
   - Notes: Manual task.
