@@ -3,7 +3,7 @@
 > **What this document is for:** It answers *how will we build it?* It turns the approved requirements in spec.md into a design, and it is agreed before any code is written.
 
 Status: Approved
-Last updated: 2026-11-10
+Last updated: 2026-11-13
 
 ---
 
@@ -29,10 +29,12 @@ The app has no secrets and no `appsettings.json`.
 
 | Setting | Stored in | Default | Notes |
 | --- | --- | --- | --- |
-| Line height on the screen | `settings.json` | 90 | Value from the spike. Spec section 6.1.8 |
-| Pen thickness on the screen | `settings.json` | 6 | Value from the spike. Spec section 2.4 |
+| Line height on the screen | `settings.json` | 90 units | Value from the spike. Spec section 6.1.8 |
+| Pen thickness on the screen | `settings.json` | 6 units | Value from the spike. Spec section 2.4 |
 | Letter gap, word gap, smoothing, pause and jump values | Constants in code | Spike values | Tuned with the tuning keys, then fixed (spec section 6.1.8) |
 | Data folder | Constant in code | `%LOCALAPPDATA%\TrackpadWhiteboard` | Local only (spec section 6.1.7). The stores take the folder in their constructor, so tests can give a temporary folder. |
+
+A "unit" in this plan is a WPF device-independent unit, 1/96 inch. At 100% display scaling, one unit is one screen pixel, so the spike's "6 px" in spec section 2.4 is 6 units.
 
 ---
 
@@ -225,7 +227,7 @@ Enter and Space presses are recorded too, so that the replay starts lines and wo
 | Same size on the screen | New strokes get thickness and line height divided by the zoom. | Spec section 6.1.3 item 7. | Scaling the strokes later: changes saved ink. |
 | Pinch and scroll | Read `WM_MOUSEWHEEL` and `WM_MOUSEHWHEEL` in the existing window hook, in mouse mode only, and use the size of each delta. A wheel message with `MK_CONTROL` set in `wParam` is a pinch, and zooms. Any other is a scroll, and moves the view. | Microsoft documents that default touchpad handling typically generates mouse wheel messages, and that touchpads send very small deltas. For touch screens, Microsoft documents that a zoom gesture arrives as `WM_MOUSEWHEEL` with `MK_CONTROL`. This is not documented for touchpads, so it is checked first (section 9). The hook already exists and gives the raw values. | Registering as a touchpad-capable window: more code, with no benefit yet. |
 | Saving | Save from a background thread, from a snapshot, at most every 3 seconds. See the saving steps below this table. | Spec section 6.5 items 3 and 4. The probe shows 404 ms on the UI thread for 20,000 strokes, which would delay writing. | Saving on the UI thread. Waiting for a quiet moment (debounce): continuous writing would never save. |
-| Preview picture | Made on the UI thread when the owner leaves the board or closes the app, at 320 units wide, and saved with the last save. | `RenderTargetBitmap` needs the UI thread. Leaving is the one time when a short wait does not delay writing. | A preview with each save: it would delay writing. |
+| Preview picture | Made on the UI thread when the owner leaves the board or closes the app, at 320 pixels wide, and saved with the last save. | `RenderTargetBitmap` needs the UI thread. Leaving is the one time when a short wait does not delay writing. | A preview with each save: it would delay writing. |
 | Moves during saving | A move replaces a stroke with a moved copy. It does not change a stroke that a snapshot can hold. | The background save reads strokes with no lock. | Locks on the UI thread: they could delay writing. |
 | Clear the board | Delete clears at once, and one undo brings it back. | Spec section 6.1.6 item 7 allows this. It needs fewer key presses (spec section 6.5 item 7). | Asking first. |
 | Lines after undo and redo | `LineWriter` keeps each line's stroke IDs and bounds. `RemoveStroke` and `RestoreStroke` update that line, and the caret goes to the end of its ink. After a clear is undone, writing starts on a new line below the ink, as when a board opens. | Spec section 6.1.6 items 6, 7 and 9, and defect 10 in spec section 4.1. | Rebuilding the lines from the strokes' positions: rows can overlap, so the line is a guess. |

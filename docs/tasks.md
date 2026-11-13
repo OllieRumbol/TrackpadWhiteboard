@@ -2,7 +2,7 @@
 
 > **What this document is for:** It answers *what do we do next?* It splits the approved design into small, verifiable steps and tracks progress against them.
 
-Last updated: 2026-11-10
+Last updated: 2026-11-13
 
 Phase 1 of the project is split into four stages here. They are called stages so that the names do not clash with phases 2 and 3 in spec section 3.
 
@@ -146,6 +146,7 @@ Goal: the owner passes the writing test in spec section 6.2.1. Nothing else star
     - The values from the passed writing test are constants in code. The default look is still the spike's thick black pen with smooth curves.
     - The tuning keys, the status bar, and the `AdvanceMode` and `WordBoundaryMethod` values that did not win are removed.
     - Letter and punctuation keys do not change how writing behaves (test 22, for the keys that exist so far).
+    - The key table in `README.md` no longer lists the tuning keys.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`
   - Notes: The keys `1`–`4`, `E`, `Y` and `0` are free for stage 2 only after this task.
 
@@ -161,7 +162,7 @@ Goal: the owner has a large board, can zoom and move around it, and writing stay
     - In mouse mode, pinch and `+`/`-` zoom, two-finger scroll and the arrow keys move the view, and `0` shows the whole board.
     - Zoom and view moves do not change the ink, and ink stays sharp at every zoom level.
   - Verify: `dotnet test TrackpadWhiteboard.slnx`, then the owner's check of pinch and scroll
-  - Notes: Check pinch first (plan 9): it must arrive as wheel messages with `MK_CONTROL` set (plan 3.5). If it does not, stop and report. The plan does not set the lowest and highest zoom. Propose them in this task, and add them to plan 3.5.
+  - Notes: Check pinch first (plan 9): it must arrive as wheel messages with `MK_CONTROL` set (plan 3.5). If it does not, stop and report. The plan does not set the lowest and highest zoom. Propose them in this task. Get the owner's approval before the code uses them, then add them to plan 3.5.
 
 - [ ] **T14 — Write at any zoom, with the writing on the screen**
   - Refs: spec 6.1.3 items 6–8, spec 6.6 (pointer outside the board, window changes size), plan 3.5 (same size on the screen), plan 7.2 test 13
@@ -319,9 +320,10 @@ Goal: the three-column layout and the settings view work, the numbers in spec se
   - Notes: If opening is slow, the next option is in plan 9.
 
 - [ ] **T26 — Install the app and run the writing test again**
-  - Refs: plan 7.2 owner checks 1–2, plan 8 (install), spec 6.2.1
+  - Refs: spec 6.2.1, plan 3.3 (keys), plan 7.2 owner checks 1–2, plan 8 (install and roll back)
   - Depends on: T22, T23, T24, T25
   - Done when:
+    - `README.md` describes the app as it is now: what it does, its status, how to run it, and the keys in plan 3.3. The spike's findings stay, under a heading that says they are history.
     - `README.md` says how to publish the app to a dated local folder, add a desktop shortcut, and roll back (plan 8).
     - The owner passes the writing test again, with zoom and saving in place, and with no Enter inside a line.
     - The owner checks pinch, two-finger scroll and every key in plan 3.3.
